@@ -536,7 +536,6 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
   }
 
   Widget _buildMetricsGrid(BuildContext context, Map<String, dynamic>? p) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(

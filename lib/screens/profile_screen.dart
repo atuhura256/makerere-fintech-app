@@ -132,7 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildLiveBalanceGrid(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

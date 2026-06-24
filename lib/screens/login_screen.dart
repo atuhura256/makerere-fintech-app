@@ -160,6 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -194,6 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLogo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Container(
@@ -217,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: theme.brightness == Brightness.dark
+            color: isDark
                 ? const Color(0xFFEEF2F6)
                 : const Color(0xFF0F172A),
           ),
@@ -227,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
           'Secure Multi-SACCO Platform',
           style: TextStyle(
             fontSize: 14,
-            color: theme.brightness == Brightness.dark
+            color: isDark
                 ? Colors.grey[500]
                 : Colors.grey[600],
           ),

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:makerere_fintech_app/app/config/app_constants.dart';
 
