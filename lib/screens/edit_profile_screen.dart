@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:makerere_fintech_app/app/config/app_constants.dart';
 import 'package:makerere_fintech_app/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,16 +21,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = SupabaseService.currentUser;
     if (user != null) {
       _nameCtrl.text = user.userMetadata?['full_name'] as String? ?? '';
-      _phoneCtrl.text = user.userMetadata?['phone'] as String? ?? '';
+      _phoneCtrl.text = user.userMetadata?['phone_number'] as String? ?? '';
     }
   }
 
   Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('Name is required'), backgroundColor: Colors.orangeAccent, behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated'), backgroundColor: AppConstants.emerald));
-      Navigator.pop(context);
+
+    try {
+      final user = SupabaseService.currentUser;
+      if (user == null) throw Exception('Not authenticated');
+
+      await SupabaseService.client.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': name,
+            'phone_number': phone,
+          },
+        ),
+      );
+
+      await SupabaseService.client.from('profiles').upsert({
+        'id': user.id,
+        'full_name': name,
+        'phone_number': phone,
+        if (user.email != null) 'email': user.email,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile updated successfully'),
+            backgroundColor: AppConstants.emerald,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -43,13 +93,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(
+        title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w700)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded),
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false),
+          ),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [theme.scaffoldBackgroundColor, theme.brightness == Brightness.dark ? const Color(0xFF080E1A) : const Color(0xFFE8F5E9)],
+            colors: [theme.scaffoldBackgroundColor, isDark ? const Color(0xFF080E1A) : const Color(0xFFE8F5E9)],
           ),
         ),
         child: SafeArea(
@@ -67,22 +128,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: const Center(child: Icon(Icons.camera_alt, color: Colors.white, size: 28)),
                 ),
                 const SizedBox(height: 32),
-                TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person))),
+                _buildInput(theme, 'Full Name', Icons.person_outline, _nameCtrl, 'Enter your full name'),
                 const SizedBox(height: 16),
-                TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone))),
-                const SizedBox(height: 24),
+                _buildInput(theme, 'Phone Number', Icons.phone_android, _phoneCtrl, 'e.g., 0700123456'),
+                const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: _loading ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.emerald,
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
                     child: _loading
                         ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.save_rounded, size: 20),
+                              SizedBox(width: 8),
+                              Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                            ],
+                          ),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(ThemeData theme, String label, IconData icon, TextEditingController ctrl, String hint) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.cardColor,
+        border: Border.all(
+          color: (theme.brightness == Brightness.dark ? const Color(0xFF1A2332) : const Color(0xFFD0D5DD)).withAlpha(100),
+        ),
+      ),
+      child: TextField(
+        controller: ctrl,
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 15),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withAlpha(160), fontSize: 13),
+          prefixIcon: Icon(icon, color: AppConstants.emerald, size: 20),
+          hintText: hint,
+          hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withAlpha(80), fontSize: 13),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );

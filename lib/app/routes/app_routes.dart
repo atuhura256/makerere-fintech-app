@@ -13,4 +13,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String dashboardReports = '/dashboard-reports';
   static const String realtimeLedger = '/realtime-ledger';
+  static const String accountDetails = '/account_details';
+  static const String securityKeys = '/security_keys';
+  static const String superAdmin = '/super-admin';
 }

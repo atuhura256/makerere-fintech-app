@@ -80,6 +80,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
 
   void _showDepositSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final amountCtrl = TextEditingController();
     Map<String, dynamic>? selectedProduct = _products.isNotEmpty ? _products.first : null;
     bool isSubmitting = false;
@@ -87,68 +88,197 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.fromLTRB(24, 8, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [
+                theme.cardColor,
+                (isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FFF8)),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(color: AppConstants.emerald.withAlpha(8), blurRadius: 40, offset: const Offset(0, -12)),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Deposit into ${widget.saccoName}', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text('Post a real-time savings transaction to the decentralized tenant ledger.', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12)),
+              Center(
+                child: Container(
+                  width: 48, height: 4,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppConstants.emerald, AppConstants.emeraldLight]),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [AppConstants.emerald, AppConstants.emeraldDark]),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: AppConstants.emerald.withAlpha(50), blurRadius: 16, offset: const Offset(0, 6))],
+                    ),
+                    child: const Icon(Icons.wallet_rounded, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Deposit Funds', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+                        const SizedBox(height: 2),
+                        Text(widget.saccoName, style: const TextStyle(color: AppConstants.emerald, fontSize: 12, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (isDark ? const Color(0xFF1A2332) : const Color(0xFFE2E8F0)).withAlpha(120),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.close_rounded, size: 18, color: theme.textTheme.bodyMedium?.color),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
 
               if (_products.isNotEmpty) ...[
-                Text('Select Savings Account Type', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text('Savings Product', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(14),
+                    color: (isDark ? const Color(0xFF050A15) : const Color(0xFFF0F2F5)).withAlpha(120),
+                    border: Border.all(color: (isDark ? const Color(0xFF1A2332) : const Color(0xFFD0D5DD)).withAlpha(100)),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<Map<String, dynamic>>(
                       value: selectedProduct,
                       isExpanded: true,
                       dropdownColor: theme.cardColor,
+                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.emerald),
                       items: _products.map((p) {
                         return DropdownMenuItem<Map<String, dynamic>>(
                           value: p,
-                          child: Text('${p['product_name']} (${p['interest_rate']}% APR)', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14)),
+                          child: Text('${p['product_name']} (${p['interest_rate']}% APR)',
+                            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14)),
                         );
                       }).toList(),
                       onChanged: (val) => setModalState(() => selectedProduct = val),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ],
 
-              Text('Transaction Amount (UGX)', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 13, fontWeight: FontWeight.w600)),
+              Text('Enter Amount', style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 12, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              TextField(
-                controller: amountCtrl,
-                keyboardType: TextInputType.number,
-                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
-                decoration: const InputDecoration(
-                  labelText: 'Amount',
-                  prefixIcon: Icon(Icons.monetization_on_outlined, color: AppConstants.emerald),
-                  hintText: 'e.g., 50000',
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: (isDark ? const Color(0xFF050A15) : const Color(0xFFF0F2F5)).withAlpha(160),
+                  border: Border.all(color: AppConstants.emerald.withAlpha(60), width: 1.5),
+                  boxShadow: amountCtrl.text.isNotEmpty
+                      ? [BoxShadow(color: AppConstants.emerald.withAlpha(12), blurRadius: 8, offset: const Offset(0, 2))]
+                      : null,
+                ),
+                child: TextField(
+                  controller: amountCtrl,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    prefixText: 'UGX ',
+                    prefixStyle: const TextStyle(color: AppConstants.emerald, fontSize: 28, fontWeight: FontWeight.w800),
+                    hintText: '0.00',
+                    hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withAlpha(60), fontSize: 28, fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
 
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _quickAmountChip(context, '10,000', AppConstants.emerald, () => setModalState(() => amountCtrl.text = '10000')),
+                  const SizedBox(width: 8),
+                  _quickAmountChip(context, '50,000', AppConstants.cyan, () => setModalState(() => amountCtrl.text = '50000')),
+                  const SizedBox(width: 8),
+                  _quickAmountChip(context, '100,000', AppConstants.violet, () => setModalState(() => amountCtrl.text = '100000')),
+                  const SizedBox(width: 8),
+                  _quickAmountChip(context, '500,000', AppConstants.amber, () => setModalState(() => amountCtrl.text = '500000')),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppConstants.emerald.withAlpha(6),
+                      (isDark ? const Color(0xFF0B1222) : const Color(0xFFF0FFF4)).withAlpha(80),
+                    ],
+                  ),
+                  border: Border.all(color: AppConstants.emerald.withAlpha(18)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppConstants.emerald.withAlpha(15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.receipt_long_outlined, size: 18, color: AppConstants.emerald),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Deposit Summary', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
+                    Text(
+                      amountCtrl.text.trim().isNotEmpty && (double.tryParse(amountCtrl.text.trim()) ?? 0) > 0
+                          ? 'UGX ${_formatCompact(double.tryParse(amountCtrl.text.trim()) ?? 0)}'
+                          : '—',
+                      style: TextStyle(
+                        color: amountCtrl.text.trim().isNotEmpty && (double.tryParse(amountCtrl.text.trim()) ?? 0) > 0
+                            ? AppConstants.emerald
+                            : theme.textTheme.bodyMedium?.color?.withAlpha(80),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: isSubmitting ? null : () async {
                     final double? amount = double.tryParse(amountCtrl.text.trim());
                     if (amount == null || amount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid amount'), backgroundColor: Colors.orangeAccent));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a valid amount'), backgroundColor: Colors.orangeAccent, behavior: SnackBarBehavior.floating),
+                      );
                       return;
                     }
 
@@ -187,29 +317,63 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('✔ UGX ${amountCtrl.text} deposited successfully!'), backgroundColor: AppConstants.emerald)
+                            SnackBar(
+                              content: Text('UGX ${amountCtrl.text} deposited successfully!'),
+                              backgroundColor: AppConstants.emerald,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                           );
                           _loadData();
                         }
                       } else {
                         setModalState(() => isSubmitting = false);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction canceled or declined.'), backgroundColor: Colors.orangeAccent));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction canceled or declined.'), backgroundColor: Colors.orangeAccent, behavior: SnackBarBehavior.floating));
                         }
                       }
                     } catch (e) {
                       setModalState(() => isSubmitting = false);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error processing deposit: $e'), backgroundColor: Colors.redAccent));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.emerald,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shadowColor: AppConstants.emerald.withAlpha(60),
+                  ),
                   child: isSubmitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Confirm Deposit Entry', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.lock_rounded, size: 18),
+                            SizedBox(width: 8),
+                            Text('Confirm Deposit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _quickAmountChip(BuildContext context, String label, Color accent, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [accent.withAlpha(12), accent.withAlpha(4)]),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accent.withAlpha(30)),
+        ),
+        child: Text(label, style: TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w700)),
       ),
     );
   }
@@ -251,49 +415,113 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
         decoration: BoxDecoration(
-          color: theme.cardColor,
-          border: Border(top: BorderSide(color: theme.dividerColor.withAlpha(160))),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            colors: [
+              theme.cardColor.withAlpha(240),
+              theme.cardColor,
+            ],
+          ),
+          border: Border(top: BorderSide(color: AppConstants.emerald.withAlpha(12))),
+          boxShadow: [
+            BoxShadow(color: AppConstants.emerald.withAlpha(6), blurRadius: 20, offset: const Offset(0, -4)),
+          ],
         ),
         child: Row(
           children: [
             Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _showDepositSheet(context),
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text('Deposit', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.emerald,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(colors: [AppConstants.emerald, AppConstants.emeraldDark]),
+                  boxShadow: [BoxShadow(color: AppConstants.emerald.withAlpha(40), blurRadius: 12, offset: const Offset(0, 4))],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => _showDepositSheet(context),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_rounded, size: 20, color: Colors.black),
+                        SizedBox(width: 8),
+                        Text('Deposit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => SaccoLoanApplicationScreen(
-                        saccoId: widget.pattern?['sacco_id'] ?? p?['sacco_id'] ?? '',
-                        saccoName: widget.saccoName,
-                        schemaName: widget.schemaName,
-                      ),
+              child: Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppConstants.emerald.withAlpha(60), width: 1.5),
+                  color: AppConstants.emerald.withAlpha(6),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SaccoLoanApplicationScreen(
+                            saccoId: widget.pattern?['sacco_id'] ?? p?['sacco_id'] ?? '',
+                            saccoName: widget.saccoName,
+                            schemaName: widget.schemaName,
+                          ),
+                        ),
+                      ).then((_) => _loadData());
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.credit_score_outlined, size: 20, color: AppConstants.emerald),
+                        SizedBox(width: 8),
+                        Text('Request Loan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppConstants.emerald)),
+                      ],
                     ),
-                  ).then((_) => _loadData());
-                },
-                icon: const Icon(Icons.credit_score_outlined, size: 20),
-                label: const Text('Request Loan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppConstants.emerald,
-                  side: const BorderSide(color: AppConstants.emerald, width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
             ),
+            if (_hasAdminAccess) ...[
+              const SizedBox(width: 12),
+              Container(
+                width: 54, height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppConstants.violet.withAlpha(50)),
+                  color: AppConstants.violet.withAlpha(8),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SaccoAdminPortalScreen(
+                            saccoName: widget.saccoName,
+                            schemaName: widget.schemaName,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Icon(Icons.admin_panel_settings_outlined, color: AppConstants.violet, size: 22),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

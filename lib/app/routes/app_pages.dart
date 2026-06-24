@@ -11,6 +11,9 @@ import 'package:makerere_fintech_app/screens/edit_profile_screen.dart';
 import 'package:makerere_fintech_app/screens/tenant_registration_screen.dart';
 import 'package:makerere_fintech_app/screens/login_screen.dart';
 import 'package:makerere_fintech_app/screens/dashboard_reports_screen.dart';
+import 'package:makerere_fintech_app/screens/account_details_screen.dart';
+import 'package:makerere_fintech_app/screens/security_key_management_screen.dart';
+import 'package:makerere_fintech_app/screens/super_admin_panel_screen.dart';
 import 'package:makerere_fintech_app/features/transactions/presentation/views/realtime_ledger_audit_view.dart';
 
 class AppPages {
@@ -29,5 +32,8 @@ class AppPages {
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.dashboardReports: (_) => const DashboardReportsScreen(),
         AppRoutes.realtimeLedger: (_) => const RealtimeLedgerAuditView(),
+        AppRoutes.accountDetails: (_) => const AccountDetailsScreen(),
+        AppRoutes.securityKeys: (_) => const SecurityKeyManagementScreen(),
+        AppRoutes.superAdmin: (_) => const SuperAdminPanelScreen(),
       };
 }

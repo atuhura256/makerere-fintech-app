@@ -29,8 +29,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
     try {
       final results = await Future.wait([
-        SupabaseService.getPlatformMarketOverview().catchError((_) => <Map<String, dynamic>>[]),
-        SupabaseService.getSaccoLeaderboard().catchError((_) => <Map<String, dynamic>>[]),
+        SupabaseService.getPlatformMarketOverview().catchError((e) => <Map<String, dynamic>>[]),
+        SupabaseService.getSaccoLeaderboard().catchError((e) => <Map<String, dynamic>>[]),
       ]);
 
       if (mounted) {
@@ -63,7 +63,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 24),
-                  _buildBalanceGlowCard(context),
+                  _buildBalanceCard(context),
                   const SizedBox(height: 24),
                   _buildPlatformStats(context),
                   const SizedBox(height: 24),
@@ -129,72 +129,113 @@ class _HomeDashboardState extends State<HomeDashboard> {
     final theme = Theme.of(context);
     final userEmail = SupabaseService.client.auth.currentUser?.email ?? 'Member Node';
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome Back,',
-              style: TextStyle(
-                color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              userEmail.split('@').first,
-              style: TextStyle(
-                color: theme.textTheme.bodyLarge?.color,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.cardColor,
+            (theme.brightness == Brightness.dark ? const Color(0xFF0B1222) : const Color(0xFFF8FFF8)),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppConstants.emerald.withAlpha(15), AppConstants.emerald.withAlpha(5)],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppConstants.emerald.withAlpha(30)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6, height: 6,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppConstants.emerald,
-                  boxShadow: [
-                    BoxShadow(color: AppConstants.emerald, blurRadius: 6),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Text(
-                'LIVE NODE',
-                style: TextStyle(
-                  color: AppConstants.emerald,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
+        border: Border.all(
+          color: AppConstants.emerald.withAlpha(20),
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.emerald.withAlpha(6),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppConstants.emerald, AppConstants.emeraldDark],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppConstants.emerald.withAlpha(40),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.person_rounded, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back,',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userEmail.split('@').first,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppConstants.emerald.withAlpha(15), AppConstants.emerald.withAlpha(5)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppConstants.emerald.withAlpha(30)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6, height: 6,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppConstants.emerald,
+                    boxShadow: [BoxShadow(color: AppConstants.emerald, blurRadius: 6)],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'LIVE',
+                  style: TextStyle(
+                    color: AppConstants.emerald,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildBalanceGlowCard(BuildContext context) {
+  Widget _buildBalanceCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final double totalDynamicAssets = (_marketOverview?['total_assets'] as num?)?.toDouble() ?? 0.0;
@@ -203,18 +244,16 @@ class _HomeDashboardState extends State<HomeDashboard> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
               ? [const Color(0xFF0F1A2E), const Color(0xFF0B1222)]
-              : [Colors.white, const Color(0xFFF8FAFC)],
+              : [Colors.white, const Color(0xFFF0FFF4)],
         ),
         border: Border.all(
-          color: isDark
-              ? const Color(0xFF1A2332).withAlpha(120)
-              : const Color(0xFFD0D5DD).withAlpha(120),
+          color: (isDark ? const Color(0xFF1A2332) : const Color(0xFFD0D5DD)).withAlpha(120),
         ),
         boxShadow: [
           BoxShadow(
@@ -231,7 +270,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total Dynamic Savings Pool',
+                'Total Pool Value',
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color?.withAlpha(150),
                   fontSize: 12,
@@ -242,8 +281,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppConstants.emerald.withAlpha(12),
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [AppConstants.emerald.withAlpha(12), AppConstants.emerald.withAlpha(5)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppConstants.emerald.withAlpha(20)),
                 ),
                 child: Icon(
                   Icons.account_balance_wallet_outlined,
@@ -253,42 +295,44 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _loading
               ? const SizedBox(
-                  width: 30, height: 20,
+                  width: 30, height: 24,
                   child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.emerald),
                 )
               : Text(
                   _formatCurrency(totalDynamicAssets),
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
-                    fontSize: 30,
+                    fontSize: 32,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.0,
+                    height: 1.1,
                   ),
                 ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppConstants.emerald.withAlpha(15),
-                  borderRadius: BorderRadius.circular(6),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppConstants.emerald.withAlpha(12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.trending_up, color: AppConstants.emerald, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  '+${_marketOverview?['growth_rate_pct'] ?? 14.5}% this month',
+                  style: const TextStyle(
+                    color: AppConstants.emerald,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                child: const Icon(Icons.trending_up, color: AppConstants.emerald, size: 12),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '+${_marketOverview?['growth_rate_pct'] ?? 14.5}% this month',
-                style: const TextStyle(
-                  color: AppConstants.emerald,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -298,6 +342,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   Widget _buildPlatformStats(BuildContext context) {
     final totalTransactions = _marketOverview?['total_transactions'] ?? 0;
     final totalMembers = _marketOverview?['active_members_count'] ?? 0;
+    final totalSaccos = _marketOverview?['total_saccos'] ?? 0;
 
     return Row(
       children: [
@@ -310,13 +355,23 @@ class _HomeDashboardState extends State<HomeDashboard> {
             isLoading: _loading,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
           child: BlockchainMetricCard(
-            label: 'Federation Members',
+            label: 'Members',
             value: _formatLargeNum(totalMembers),
             icon: Icons.groups_outlined,
             color: AppConstants.violet,
+            isLoading: _loading,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: BlockchainMetricCard(
+            label: 'SACCOs',
+            value: _formatLargeNum(totalSaccos),
+            icon: Icons.account_balance_rounded,
+            color: AppConstants.emerald,
             isLoading: _loading,
           ),
         ),
@@ -329,108 +384,193 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        BlockchainSectionHeader(
-          title: 'Top Performing Sacco Nodes',
-          icon: Icons.emoji_events_outlined,
-          accentColor: AppConstants.emerald,
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppConstants.amber.withAlpha(15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.emoji_events_outlined, size: 16, color: AppConstants.amber),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Top Performing Nodes',
+                style: TextStyle(
+                  color: theme.textTheme.bodyLarge?.color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _leaderboard.take(3).length,
-          itemBuilder: (context, index) {
-            final sacco = _leaderboard[index];
-            return BlockchainCard(
-              hasAccentBar: true,
-              accentColor: AppConstants.emerald,
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SaccoDetailsPage(
-                      saccoName: sacco['sacco_name'] ?? 'Federation Node',
-                      schemaName: sacco['schema_name'] ?? 'public',
-                      pattern: sacco,
-                    ),
-                  ),
-                );
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppConstants.emerald.withAlpha(20), AppConstants.emerald.withAlpha(5)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppConstants.emerald.withAlpha(25), width: 0.5),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '#${index + 1}',
-                        style: const TextStyle(
-                          color: AppConstants.emerald,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sacco['sacco_name'] ?? '',
-                          style: TextStyle(
-                            color: theme.textTheme.bodyLarge?.color,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${sacco['member_count'] ?? 0} members · ${sacco['transaction_count'] ?? 0} txns',
-                          style: TextStyle(
-                            color: theme.textTheme.bodyMedium?.color?.withAlpha(140),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatCurrency(sacco['total_volume']),
-                    style: const TextStyle(
-                      color: AppConstants.emerald,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
+        const SizedBox(height: 14),
+        ...List.generate(_leaderboard.take(3).length, (index) {
+          final sacco = _leaderboard[index];
+          final isFirst = index == 0;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.cardColor,
+                  (theme.brightness == Brightness.dark ? const Color(0xFF0B1222) : const Color(0xFFFAFCF8)),
                 ],
               ),
-            );
-          },
-        ),
+              border: Border.all(
+                color: isFirst
+                    ? AppConstants.amber.withAlpha(40)
+                    : (theme.brightness == Brightness.dark ? const Color(0xFF1A2332) : const Color(0xFFD0D5DD)).withAlpha(100),
+              ),
+              boxShadow: isFirst
+                  ? [BoxShadow(color: AppConstants.amber.withAlpha(10), blurRadius: 12, offset: const Offset(0, 4))]
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SaccoDetailsPage(
+                        saccoName: sacco['sacco_name'] ?? 'Federation Node',
+                        schemaName: sacco['schema_name'] ?? 'public',
+                        pattern: sacco,
+                      ),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isFirst
+                                ? [AppConstants.amber.withAlpha(25), AppConstants.amber.withAlpha(10)]
+                                : [AppConstants.emerald.withAlpha(20), AppConstants.emerald.withAlpha(5)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isFirst
+                                ? AppConstants.amber.withAlpha(30)
+                                : AppConstants.emerald.withAlpha(25),
+                            width: isFirst ? 1 : 0.5,
+                          ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            isFirst ? Icons.emoji_events_rounded : Icons.account_balance_rounded,
+                            color: isFirst ? AppConstants.amber : AppConstants.emerald,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sacco['sacco_name'] ?? '',
+                              style: TextStyle(
+                                color: theme.textTheme.bodyLarge?.color,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${sacco['member_count'] ?? 0} members · ${sacco['transaction_count'] ?? 0} txns',
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color?.withAlpha(140),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            _formatCurrency(sacco['total_volume']),
+                            style: TextStyle(
+                              color: isFirst ? AppConstants.amber : AppConstants.emerald,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: (isFirst ? AppConstants.amber : AppConstants.emerald).withAlpha(12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '#${index + 1}',
+                              style: TextStyle(
+                                color: isFirst ? AppConstants.amber : AppConstants.emerald,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
       ],
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        BlockchainSectionHeader(
-          title: 'Quick Actions',
-          icon: Icons.flash_on_outlined,
-          accentColor: AppConstants.emerald,
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppConstants.emerald.withAlpha(15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.flash_on_outlined, size: 16, color: AppConstants.emerald),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Quick Actions',
+                style: TextStyle(
+                  color: theme.textTheme.bodyLarge?.color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         Row(
           children: [
             Expanded(

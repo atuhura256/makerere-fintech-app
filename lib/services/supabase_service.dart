@@ -125,11 +125,24 @@ class SupabaseService {
       return (response as List).cast<Map<String, dynamic>>();
     } catch (_) {
       final response = await client
-          .from('tenant_transactions')
-          .select('*, profiles(full_name, phone_number), tenant_financial_products(product_name)')
+          .from('sacco_transactions')
+          .select('*, profiles!inner(full_name, email)')
+          .eq('schema_name', schemaName.trim().toLowerCase())
           .order('created_at', ascending: false)
           .limit(limit);
-      return (response as List).cast<Map<String, dynamic>>();
+      return (response as List).map((t) => <String, dynamic>{
+        'transaction_id': t['transaction_id'],
+        'user_id': t['user_id'],
+        'amount': t['amount'],
+        'transaction_type': t['transaction_type'],
+        'status': t['status'],
+        'created_at': t['created_at'],
+        'reference_id': t['reference_id'],
+        'users': {
+          'full_name': t['profiles']?['full_name'],
+          'phone_number': t['profiles']?['phone_number'],
+        },
+      }).toList();
     }
   }
 
@@ -162,10 +175,18 @@ class SupabaseService {
       return (response as List).cast<Map<String, dynamic>>();
     } catch (_) {
       final response = await client
-          .from('profiles')
-          .select('*')
-          .order('full_name');
-      return (response as List).cast<Map<String, dynamic>>();
+          .from('sacco_membership_requests')
+          .select('user_id, applicant_name, applicant_email, applicant_phone, status')
+          .eq('schema_name', schemaName.trim().toLowerCase())
+          .eq('status', 'APPROVED')
+          .order('created_at', ascending: false);
+      return (response as List).map((r) => <String, dynamic>{
+        'id': r['user_id'],
+        'full_name': r['applicant_name'],
+        'email': r['applicant_email'],
+        'phone_number': r['applicant_phone'],
+        'status': 'ACTIVE',
+      }).toList();
     }
   }
 
@@ -185,6 +206,18 @@ class SupabaseService {
         'created_at': DateTime.now().toIso8601String(),
       });
     }
+    try {
+      await client.from('sacco_transactions').insert({
+        'user_id': payload['user_id'] ?? currentUser?.id,
+        'schema_name': schemaName.trim().toLowerCase(),
+        'account_type': 'SAVINGS',
+        'transaction_type': payload['transaction_type'] ?? 'DEPOSIT',
+        'amount': payload['amount'],
+        'reference_id': 'DEP-${DateTime.now().millisecondsSinceEpoch}',
+        'status': 'SUCCESSFUL',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
   }
 
   // ── Real-Time Ledger Transactions Payment Handlers ─────────────────────────
@@ -305,15 +338,6 @@ class SupabaseService {
     if (user == null) throw Exception("Authorization session context missing.");
 
     try {
-      await client.from('tenant_loans').insert({
-        'user_id': user.id,
-        'amount_requested': principal,
-        'interest_rate': rate,
-        'repayment_period_months': months,
-        'status': 'SUBMITTED',
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {
       await client.from('sacco_loan_requests').insert({
         'sacco_id': saccoId,
         'schema_name': schemaName,
@@ -325,6 +349,15 @@ class SupabaseService {
         'status': 'PENDING',
         'created_at': DateTime.now().toIso8601String(),
       });
+    } catch (_) {
+      await client.from('tenant_loans').insert({
+        'user_id': user.id,
+        'amount_requested': principal,
+        'interest_rate': rate,
+        'repayment_period_months': months,
+        'status': 'SUBMITTED',
+        'created_at': DateTime.now().toIso8601String(),
+      });
     }
   }
 
@@ -333,15 +366,15 @@ class SupabaseService {
   }) async {
     try {
       final response = await client
-          .from('tenant_loans')
-          .select('*, profiles(full_name, email)')
+          .from('sacco_loan_requests')
+          .select('*')
+          .eq('schema_name', schemaName)
           .order('created_at', ascending: false);
       return (response as List).cast<Map<String, dynamic>>();
     } catch (_) {
       final response = await client
-          .from('sacco_loan_requests')
-          .select('*')
-          .eq('schema_name', schemaName)
+          .from('tenant_loans')
+          .select('*, profiles(full_name, email)')
           .order('created_at', ascending: false);
       return (response as List).cast<Map<String, dynamic>>();
     }
@@ -352,9 +385,22 @@ class SupabaseService {
     return (response as List).cast<Map<String, dynamic>>();
   }
 
+  static Future<bool> isSuperAdmin() async {
+    final user = client.auth.currentUser;
+    if (user == null) return false;
+    try {
+      final result = await client.rpc('is_super_admin');
+      return result == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> verifyAdminPrivileges({required String schemaName}) async {
     final user = client.auth.currentUser ?? client.auth.currentSession?.user;
     if (user == null || user.email == null) return false;
+
+    if (await isSuperAdmin()) return true;
 
     try {
       final response = await client
@@ -376,9 +422,22 @@ class SupabaseService {
     }
   }
 
+  // ── Super Admin Operations ─────────────────────────────────────────────
+
+  static Future<void> adminDeleteUser(String userId) =>
+      client.rpc('admin_delete_user', params: {'p_user_id': userId});
+
+  static Future<void> adminDeleteSacco(String saccoId) =>
+      client.rpc('admin_delete_sacco', params: {'p_sacco_id': saccoId});
+
+  static Future<void> adminRemoveMember(String requestId) =>
+      client.rpc('admin_remove_member', params: {'p_request_id': requestId});
+
   static Future<bool> checkMembershipStatus({required String schemaName}) async {
     final user = currentUser;
     if (user == null) return false;
+
+    if (await isSuperAdmin()) return true;
 
     try {
       final response = await client
