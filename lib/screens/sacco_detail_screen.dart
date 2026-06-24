@@ -435,7 +435,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
               child: Container(
                 height: 54,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   gradient: const LinearGradient(colors: [AppConstants.emerald, AppConstants.emeraldDark]),
                   boxShadow: [BoxShadow(color: AppConstants.emerald.withAlpha(40), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
@@ -447,7 +447,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_rounded, size: 20, color: Colors.black),
+                        Icon(Icons.add_rounded, size: 15, color: Colors.black),
                         SizedBox(width: 8),
                         Text('Deposit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black)),
                       ],
@@ -484,7 +484,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.credit_score_outlined, size: 20, color: AppConstants.emerald),
+                        Icon(Icons.credit_score_outlined, size: 12, color: AppConstants.emerald),
                         SizedBox(width: 8),
                         Text('Request Loan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppConstants.emerald)),
                       ],
@@ -496,7 +496,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
             if (_hasAdminAccess) ...[
               const SizedBox(width: 12),
               Container(
-                width: 54, height: 54,
+                width: 45, height: 45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppConstants.violet.withAlpha(50)),
@@ -765,7 +765,7 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
 
   Widget _buildMetricsGrid(BuildContext context, Map<String, dynamic>? p) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16), // Reduced from 20 to 16 to provide more breathing room
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -777,14 +777,20 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            childAspectRatio: 1.3, // Slightly adjusted ratio to fit text better
             children: [
               BlockchainMetricCard(label: 'Total Volume', value: _formatCurrency(p?['total_volume']), icon: Icons.monetization_on, color: AppConstants.emerald),
               BlockchainMetricCard(label: 'Transactions', value: '${p?['transaction_count'] ?? 0}', icon: Icons.swap_horiz, color: AppConstants.cyan),
               BlockchainMetricCard(label: 'Members', value: '${p?['member_count'] ?? 0}', icon: Icons.groups, color: AppConstants.violet),
               BlockchainMetricCard(label: 'Avg Transaction', value: _formatCurrency(p?['avg_transaction_amount']), icon: Icons.bar_chart, color: AppConstants.amber),
               BlockchainMetricCard(label: '30d Volume', value: _formatCurrency(p?['last_30d_volume']), icon: Icons.trending_up, color: AppConstants.emerald),
-              BlockchainMetricCard(label: 'Change', value: '${p?['volume_change_pct'] != null ? (p!['volume_change_pct'] >= 0 ? '+' : '') : ''}${(p?['volume_change_pct'] as num? ?? 0).toStringAsFixed(1)}%', icon: Icons.change_circle, color: (p?['volume_change_pct'] as num? ?? 0) >= 0 ? AppConstants.emerald : AppConstants.coral),
+              // Optimized the change card to prevent text overflow
+              BlockchainMetricCard(
+                  label: 'Change',
+                  value: '${(p?['volume_change_pct'] as num? ?? 0) >= 0 ? '+' : ''}${(p?['volume_change_pct'] as num? ?? 0).toStringAsFixed(1)}%',
+                  icon: Icons.change_circle,
+                  color: (p?['volume_change_pct'] as num? ?? 0) >= 0 ? AppConstants.emerald : AppConstants.coral
+              ),
             ],
           ),
         ],

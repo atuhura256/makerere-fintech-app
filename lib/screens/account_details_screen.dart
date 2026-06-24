@@ -169,27 +169,32 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
             child: Icon(icon, size: 18, color: AppConstants.emerald.withAlpha(180)),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+          // Wrapped the Column in Flexible to prevent overflow
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  color: theme.textTheme.bodyLarge?.color,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1, // Ensures long text stays on one line
+                  overflow: TextOverflow.ellipsis, // Adds '...' if the text is too long
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

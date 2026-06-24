@@ -117,6 +117,7 @@ class BlockchainMetricCard extends StatelessWidget {
       onTap: onTap,
       padding: const EdgeInsets.all(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Fixes: Column takes only what it needs
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -126,33 +127,22 @@ class BlockchainMetricCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: color.withAlpha(15),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: color.withAlpha(30),
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: color.withAlpha(30), width: 0.5),
                 ),
                 child: Icon(icon, color: color, size: 16),
               ),
               const Spacer(),
               Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: color.withAlpha(60),
-                  shape: BoxShape.circle,
-                ),
+                width: 4, height: 4,
+                decoration: BoxDecoration(color: color.withAlpha(60), shape: BoxShape.circle),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12), // Reduced from 14 to save space
           if (isLoading)
             SizedBox(
-              width: 20,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                color: AppConstants.emerald,
-              ),
+              width: 20, height: 14,
+              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppConstants.emerald),
             )
           else
             FittedBox(
@@ -169,12 +159,17 @@ class BlockchainMetricCard extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: theme.textTheme.bodyMedium?.color?.withAlpha(140),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+          // Fixes: Wrapped label in Flexible to prevent bottom overflow
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(140),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

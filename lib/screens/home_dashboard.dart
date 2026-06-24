@@ -581,10 +581,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 route: '/tenant-registration',
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: BlockchainActionCard(
-                label: 'View All SACCOs',
+                label: 'All SACCOs',
                 icon: Icons.account_balance_outlined,
                 color: AppConstants.cyan,
                 route: '/saccos',

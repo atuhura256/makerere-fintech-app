@@ -218,6 +218,7 @@ class _TransactionCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Added to prevent vertical overflow
         children: [
           IntrinsicHeight(
             child: Row(
@@ -262,39 +263,37 @@ class _TransactionCard extends StatelessWidget {
                       ),
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min, // Added to keep column height tight
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withAlpha(15),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    tx['transaction_type'] ?? 'UNKNOWN',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: statusColor,
-                                      fontSize: 10,
-                                      letterSpacing: 0.5,
+                            Flexible( // Changed from Row to Flexible to prevent horizontal overflow
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withAlpha(15),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      tx['transaction_type'] ?? 'UNKNOWN',
+                                      overflow: TextOverflow.ellipsis, // Prevents overflow
+                                      style: TextStyle(fontWeight: FontWeight.w700, color: statusColor, fontSize: 10, letterSpacing: 0.5),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Block #$index',
-                                  style: TextStyle(
-                                    color: theme.textTheme.bodyMedium?.color?.withAlpha(120),
-                                    fontSize: 10,
-                                    fontFamily: 'monospace',
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Block #$index',
+                                      overflow: TextOverflow.ellipsis, // Prevents overflow
+                                      style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withAlpha(120), fontSize: 10, fontFamily: 'monospace'),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             BlockchainStatusChip(status: tx['status'] ?? 'UNKNOWN'),
                           ],
@@ -302,12 +301,7 @@ class _TransactionCard extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           'UGX ${tx['amount'] ?? 0}',
-                          style: TextStyle(
-                            color: AppConstants.emerald,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                            letterSpacing: -0.3,
-                          ),
+                          style: TextStyle(color: AppConstants.emerald, fontWeight: FontWeight.w800, fontSize: 18, letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 10),
                         Container(
@@ -358,6 +352,8 @@ class _TransactionCard extends StatelessWidget {
         Expanded(
           child: Text(
             hash,
+            maxLines: 1, // Added: Forces text to stay on one line
+            overflow: TextOverflow.ellipsis, // Added: Adds "..." instead of overflowing
             style: TextStyle(
               fontSize: 9,
               fontFamily: 'monospace',

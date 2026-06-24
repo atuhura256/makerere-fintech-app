@@ -45,7 +45,7 @@ class GlassBottomNavBar extends StatelessWidget {
             children: [
               _navItem(context, Icons.home_rounded, 'Home', currentRoute == '/', '/'),
               _navItem(context, Icons.account_balance_rounded, 'SACCOs', currentRoute == '/saccos', '/saccos'),
-              _navItem(context, Icons.swap_horiz_rounded, 'Transact', currentRoute == '/transactions', '/transactions'),
+              //  _navItem(context, Icons.swap_horiz_rounded, 'Transact', currentRoute == '/transactions', '/transactions'),
               _navItem(context, Icons.verified_rounded, 'Audit', currentRoute == '/realtime-ledger', '/realtime-ledger'),
               _navItem(context, Icons.person_rounded, 'Profile', currentRoute == '/profile', '/profile'),
             ],
