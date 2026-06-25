@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:makerere_fintech_app/app/config/app_constants.dart';
 import 'package:makerere_fintech_app/core/ui/blockchain_card.dart';
 import 'package:makerere_fintech_app/services/supabase_service.dart';
-import 'package:makerere_fintech_app/screens/payment_web_view_screen.dart';
 import 'package:makerere_fintech_app/screens/sacco_join_request_screen.dart';
 import 'package:makerere_fintech_app/screens/sacco_admin_portal_screen.dart';
 import 'package:makerere_fintech_app/screens/sacco_loan_application_screen.dart';
@@ -287,54 +286,36 @@ class _SaccoDetailsPageState extends State<SaccoDetailsPage> {
                       final currentUser = SupabaseService.currentUser;
                       if (currentUser == null) throw Exception("User session not found.");
 
-                      const String redirectionTarget = 'https://d23a.github.io/verification-success/';
-                      final String paymentUrl = 'https://checkout.flutterwave.com/v3/hosted/pay/test-simulation-token';
+                      // For testing: bypass payment webview and record transaction directly
+                      final refId = 'DEP-${DateTime.now().millisecondsSinceEpoch}';
+                      await SupabaseService.recordTransactionAndBuildChain(
+                        schemaName: widget.schemaName,
+                        saccoId: widget.pattern?['sacco_id'] ?? '',
+                        payload: {
+                          'amount': amount,
+                          'transaction_type': 'DEPOSIT',
+                          'user_id': currentUser.id,
+                          'reference_id': refId,
+                        },
+                      );
 
-                      if (!context.mounted) return;
-
-                      final bool paymentSuccessful = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PaymentWebViewScreen(
-                            initialUrl: paymentUrl,
-                            redirectUrl: redirectionTarget,
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('UGX ${amountCtrl.text} deposited successfully!'),
+                            backgroundColor: AppConstants.emerald,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                        ),
-                      ) ?? false;
-
-                      if (paymentSuccessful) {
-                        await SupabaseService.insertTenantTransaction(
-                          schemaName: widget.schemaName,
-                          payload: {
-                            'amount': amount,
-                            'transaction_type': 'DEPOSIT',
-                            'user_id': currentUser.id,
-                            'product_id': selectedProduct?['product_id'] ?? selectedProduct?['id'],
-                            'created_at': DateTime.now().toIso8601String(),
-                          },
                         );
-
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('UGX ${amountCtrl.text} deposited successfully!'),
-                              backgroundColor: AppConstants.emerald,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          );
-                          _loadData();
-                        }
-                      } else {
-                        setModalState(() => isSubmitting = false);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction canceled or declined.'), backgroundColor: Colors.orangeAccent, behavior: SnackBarBehavior.floating));
-                        }
+                        _loadData();
                       }
                     } catch (e) {
                       setModalState(() => isSubmitting = false);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

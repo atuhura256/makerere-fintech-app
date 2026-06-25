@@ -58,16 +58,17 @@ class _DepositScreenState extends State<DepositScreen> {
 
     try {
       final sacco = _saccos.firstWhere((s) => s['sacco_id'] == _selectedSacco);
+      final refId = 'DEP-${DateTime.now().millisecondsSinceEpoch}';
 
-      await SupabaseService.recordLedgerTransaction(
+      await SupabaseService.recordTransactionAndBuildChain(
         schemaName: sacco['schema_name'] ?? '',
+        saccoId: sacco['sacco_id'],
         payload: {
-          'sacco_id': sacco['sacco_id'],
           'user_id': user.id,
           'account_type': 'SAVINGS',
           'transaction_type': 'DEPOSIT',
           'amount': amount,
-          'reference_id': 'DEP-${DateTime.now().millisecondsSinceEpoch}',
+          'reference_id': refId,
         },
       );
 
@@ -200,8 +201,9 @@ class _DepositScreenState extends State<DepositScreen> {
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.emerald),
           items: _saccos.map<DropdownMenuItem<String>>((s) {
             final name = s['sacco_name'] as String? ?? '';
+            final id = s['sacco_id'] as String? ?? '';
             return DropdownMenuItem<String>(
-              value: name,
+              value: id,
               child: Row(
                 children: [
                   Container(

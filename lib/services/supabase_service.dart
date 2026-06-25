@@ -459,4 +459,109 @@ class SupabaseService {
       return false;
     }
   }
+
+  // ── User Transaction Chain (Blockchain Audit Ledger) ─────────────────────
+
+  /// After recording a sacco_transaction, call this to append a block to the user's chain.
+  static Future<void> buildUserChainBlock({
+    required String transactionId,
+    required String saccoId,
+    required String schemaName,
+    required String transactionType,
+    required double amount,
+    required String referenceId,
+  }) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    await client.rpc('build_user_chain_block', params: {
+      'p_user_id': user.id,
+      'p_transaction_id': transactionId,
+      'p_sacco_id': saccoId,
+      'p_schema_name': schemaName,
+      'p_transaction_type': transactionType,
+      'p_amount': amount,
+      'p_reference_id': referenceId,
+    });
+  }
+
+  /// Returns every block in a user's chain, ordered from genesis to latest.
+  static Future<List<Map<String, dynamic>>> getUserChain({
+    required String userId,
+  }) async {
+    final response = await client.rpc('get_user_chain', params: {
+      'p_user_id': userId,
+    });
+    return (response as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Verifies the full chain integrity for a user (prev_hash linkage).
+  static Future<bool> verifyUserChain({required String userId}) async {
+    final result = await client.rpc('verify_user_chain', params: {
+      'p_user_id': userId,
+    });
+    return result == true;
+  }
+
+  /// Looks up a hash (block_hash, prev_hash, or merkle_root) and returns
+  /// the matching block plus full chain integrity status for that user.
+  static Future<Map<String, dynamic>?> verifyChainHash({required String hash}) async {
+    try {
+      final result = await client.rpc('verify_chain_hash', params: {
+        'p_hash': hash,
+      });
+      if (result is List && result.isNotEmpty) {
+        return Map<String, dynamic>.from(result.first);
+      }
+      return null;
+    } catch (e) {
+      // Re-throw with more context so the UI can display it
+      throw Exception('RPC verify_chain_hash failed: $e');
+    }
+  }
+
+  /// Returns summary stats: total blocks, volume, integrity, timestamps.
+  static Future<Map<String, dynamic>?> getUserChainSummary({
+    required String userId,
+  }) async {
+    final result = await client.rpc('get_user_chain_summary', params: {
+      'p_user_id': userId,
+    });
+    if (result is List && result.isNotEmpty) {
+      return Map<String, dynamic>.from(result.first);
+    }
+    return null;
+  }
+
+  /// Records a transaction AND builds its chain block in one call.
+  static Future<void> recordTransactionAndBuildChain({
+    required String schemaName,
+    required String saccoId,
+    required Map<String, dynamic> payload,
+  }) async {
+    // 1) Insert the sacco_transaction
+    final txResponse = await client.from('sacco_transactions').insert({
+      'sacco_id': saccoId,
+      'schema_name': schemaName.trim().toLowerCase(),
+      'user_id': payload['user_id'],
+      'account_type': payload['account_type'] ?? 'SAVINGS',
+      'transaction_type': payload['transaction_type'],
+      'amount': payload['amount'],
+      'reference_id': payload['reference_id'],
+      'status': 'SUCCESSFUL',
+      'created_at': DateTime.now().toIso8601String(),
+    }).select('transaction_id').maybeSingle();
+
+    if (txResponse != null) {
+      // 2) Build the chain block
+      await buildUserChainBlock(
+        transactionId: txResponse['transaction_id'].toString(),
+        saccoId: saccoId,
+        schemaName: schemaName,
+        transactionType: payload['transaction_type'] ?? 'DEPOSIT',
+        amount: (payload['amount'] as num).toDouble(),
+        referenceId: payload['reference_id'] ?? '',
+      );
+    }
+  }
 }
